@@ -11,11 +11,22 @@ class Utils {
     pBuf = (char *) pBuf + align;
     return align;
   }
+
+  /**
+   * 小于等于 size 的最大的 64 的倍数
+   * @param size
+   * @return
+   */
   static size_t check_align_block(size_t size) {
     size_t align = size % MINUNITSIZE;
-
     return size - align;
   }
+
+  /**
+   * 大于等于 size 的最小的 64 的倍数
+   * @param size
+   * @return
+   */
   static size_t check_align_size(size_t size) {
     size = (size + SIZE_ALIGN - 1) / SIZE_ALIGN * SIZE_ALIGN;
     return size;
@@ -99,6 +110,7 @@ class Utils {
     void *ret = (void *) (p + index * MINUNITSIZE);
     return ret;
   }
+
   static size_t addr2index(MemPool *mem_pool, void *addr) {
     char *start = (char *) (mem_pool->getMemory());
     char *p = (char *) addr;

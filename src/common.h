@@ -13,15 +13,15 @@
 
 struct memory_chunk;
 // 任意一块大小的内存都会被向上取整到block大小的整数倍
-typedef struct memory_block {
-  size_t count; // 该block后面的与该block同属于1个chunk的block的数目
-  size_t start; // 该block所在chunk的起始block索引
-  memory_chunk *pmem_chunk;
-} memory_block;
+typedef struct map_unit {
+  size_t count; // 该block后面的与该block同属于1个chunk的block的数目（包含自己），chunk的第一个unit有效
+  size_t start; // 该block所在chunk的起始block索引，chunk的最后一个unit有效
+  memory_chunk *chunk_addr; // chunk的第一个unit有效
+} map_unit;
 
 // 多个连续的block组成1个chunk
 typedef struct memory_chunk {
-  memory_block *pfree_mem_addr; // 指向chunk在内存映射表中的位置
+  map_unit *map_addr; // 指向本chunk在内存映射表中的位置，其实就是起始 block 对应的 map_unit, 不为空代表是 free_chunk
   memory_chunk *pre;
   memory_chunk *next;
 } memory_chunk;
