@@ -10,12 +10,26 @@ void thread_alloc(CentralMemPool *central_pool) {
   central_pool->DeleteThread();
 }
 
-void thread_alloc_2(CentralMemPool *central_pool) {
+void thread_gc(CentralMemPool *central_pool) {
   central_pool->AddThread();
+  if (central_pool->MaxAllocSizeInMemPool() == -1) {
+    std::cout << "thread gc fail !" << std::endl;
+  }
+  auto ptr1 = central_pool->MyMalloc(central_pool->MaxAllocSizeInMemPool() * MINUNITSIZE);
+  auto ptr2 = central_pool->MyMalloc(MINUNITSIZE);
+  central_pool->MyFree(ptr2);
+  central_pool->MyFree(ptr1);
   central_pool->DeleteThread();
 }
 
-void add_thread_test() {
+void simple_gc_test() {
+  CentralMemPool *central_pool = new CentralMemPool();
+  std::thread t1(thread_gc, central_pool);
+  t1.join();
+  delete central_pool;
+}
+
+void simple_cc_test() {
   CentralMemPool *central_pool = new CentralMemPool();
   std::thread t1(thread_alloc, central_pool);
   std::thread t2(thread_alloc, central_pool);
@@ -25,6 +39,6 @@ void add_thread_test() {
 }
 
 int main(int argc, char *argv[]) {
-  add_thread_test();
+  simple_gc_test();
   return 0;
 }

@@ -6,7 +6,7 @@
 #include <iostream>
 using namespace std;
 
-void test_int_alloc() {
+void int_alloc_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (pBuf == MAP_FAILED) {
@@ -35,7 +35,7 @@ void test_int_alloc() {
   munmap(pBuf, sBufSize);
 }
 
-void test_print_info() {
+void print_info_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (pBuf == MAP_FAILED) {
@@ -49,7 +49,7 @@ void test_print_info() {
   munmap(pBuf, sBufSize);
 }
 
-void test_seq_alloc() {
+void seq_alloc_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (pBuf == MAP_FAILED) {
@@ -76,7 +76,7 @@ void test_seq_alloc() {
   munmap(pBuf, sBufSize);
 }
 
-void test_seq_alloc_align() {
+void seq_alloc_align_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (pBuf == MAP_FAILED) {
@@ -103,7 +103,7 @@ void test_seq_alloc_align() {
   munmap(pBuf, sBufSize);
 }
 
-void test_not_merge() {
+void not_merge_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (pBuf == MAP_FAILED) {
@@ -127,7 +127,7 @@ void test_not_merge() {
   munmap(pBuf, sBufSize);
 }
 
-void test_merge() {
+void merge_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (pBuf == MAP_FAILED) {
@@ -155,7 +155,7 @@ void test_merge() {
   munmap(pBuf, sBufSize);
 }
 
-void test_max() {
+void max_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (pBuf == MAP_FAILED) {
@@ -174,7 +174,7 @@ void test_max() {
   munmap(pBuf, sBufSize);
 }
 
-void test_overflow() {
+void overflow_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (pBuf == MAP_FAILED) {

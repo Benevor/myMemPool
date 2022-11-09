@@ -83,7 +83,7 @@ void *CentralMemPool::MyMalloc(size_t size) {
       ptr_to_mem_pool_.emplace(ptr, mem_pool);
       ptr_mutex_.unlock();
       thread_mutex_.unlock_shared();
-      std::cout << "thread " << pid << " malloc " << size << "from mem pool success" << std::endl;
+      std::cout << "thread " << pid << " malloc " << size << " from mem pool success" << std::endl;
       return ptr;
     }
   }
@@ -105,7 +105,7 @@ void *CentralMemPool::MyMalloc(size_t size) {
     ptr_to_mem_pool_.emplace(ptr, mem_pool);
   }
   thread_mutex_.unlock();
-  std::cout << "thread " << pid << " malloc " << size << "from mem pool success, after add mem pool" << std::endl;
+  std::cout << "thread " << pid << " malloc " << size << " from mem pool success, after add mem pool" << std::endl;
   return ptr;
 }
 
@@ -126,6 +126,23 @@ void CentralMemPool::MyFree(void *p) {
     mem_pool->FreeMemory(p);
     thread_mutex_.unlock_shared();
     std::cout << "thread " << pid << " free to mem pool success" << std::endl;
+    if (mem_pool->UsedSize() == 0) {
+      thread_mutex_.lock();
+      size_t index = 0;
+      for (auto &m: thread_to_mem_pool_[pid]) {
+        if (m == mem_pool) {
+          break;
+        }
+        index++;
+      }
+      if (thread_to_mem_pool_[pid].size() > 1) {
+        // 每个线程至少留一个 mem pool
+        thread_to_mem_pool_[pid].erase(thread_to_mem_pool_[pid].begin() + index);
+        free_buff_.emplace_back((void *) mem_pool);
+        std::cout << "thread " << pid << " gc index:" << index << " mem pool" << std::endl;
+      }
+      thread_mutex_.unlock();
+    }
     return;
   }
   // 尝试在大内存中寻找
@@ -185,4 +202,14 @@ void CentralMemPool::FreeAllMem() {
 
 CentralMemPool::~CentralMemPool() {
   FreeAllMem();
+}
+
+size_t CentralMemPool::MaxAllocSizeInMemPool() {
+  auto pid = std::this_thread::get_id();
+  if (thread_to_mem_pool_.count(pid) == 0 || thread_to_mem_pool_[pid].empty()) {
+    std::cout << "unexpected error !" << std::endl;
+    thread_mutex_.unlock_shared();
+    return -1;
+  }
+  return thread_to_mem_pool_[pid][0]->MaxAllocSize();
 }

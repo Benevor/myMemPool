@@ -41,6 +41,9 @@ class ThreadMemPool {
   void *&getMemory() {
     return memory_;
   }
+  size_t UsedSize() {
+    return mem_used_size_;
+  }
 };
 
 void CreateMemoryPool(void *pBuf, size_t sBufSize, ThreadMemPool *&mem_pool);

@@ -27,6 +27,8 @@ class CentralMemPool {
 
   void FreeAllMem();
 
+  size_t MaxAllocSizeInMemPool(); // for test
+
  private:
   //  std::vector<ThreadMemPool *> all_thread_mem_pools_;
   size_t fix_size_ = MEMORY_POOL_BYTE_SIZE;
