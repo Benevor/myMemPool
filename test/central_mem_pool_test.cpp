@@ -43,15 +43,24 @@ void thread_gc(CentralMemPool *central_pool) {
   central_pool->DeleteThread();
 }
 
+void thread_dup_free(CentralMemPool *central_pool) {
+  central_pool->AddThread();
+  auto ptr = central_pool->MyMalloc(MINUNITSIZE);
+  central_pool->MyFree(ptr);
+  central_pool->MyFree(ptr);
+
+  central_pool->DeleteThread();
+}
+
 void simple_gc_test() {
-  CentralMemPool *central_pool = new CentralMemPool();
+  auto central_pool = new CentralMemPool();
   std::thread t1(thread_gc, central_pool);
   t1.join();
   delete central_pool;
 }
 
 void simple_cc_test() {
-  CentralMemPool *central_pool = new CentralMemPool();
+  auto central_pool = new CentralMemPool();
   std::thread t1(thread_alloc, central_pool);
   std::thread t2(thread_alloc, central_pool);
   t1.join();
@@ -60,7 +69,7 @@ void simple_cc_test() {
 }
 
 void cc_gc_test() {
-  CentralMemPool *central_pool = new CentralMemPool();
+  auto central_pool = new CentralMemPool();
   std::thread t1(thread_gc, central_pool);
   std::thread t2(thread_gc, central_pool);
   t1.join();
@@ -69,7 +78,7 @@ void cc_gc_test() {
 }
 
 void cc_test() {
-  CentralMemPool *central_pool = new CentralMemPool();
+  auto central_pool = new CentralMemPool();
   std::thread t1(thread_cc, central_pool);
   std::thread t2(thread_cc, central_pool);
   std::thread t3(thread_cc, central_pool);
@@ -80,10 +89,13 @@ void cc_test() {
 }
 
 void duplicate_free_test() {
-
+  auto central_pool = new CentralMemPool();
+  std::thread t1(thread_dup_free, central_pool);
+  t1.join();
+  delete central_pool;
 }
 
 int main(int argc, char *argv[]) {
-  cc_test();
+  duplicate_free_test();
   return 0;
 }
