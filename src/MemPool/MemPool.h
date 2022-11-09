@@ -7,6 +7,7 @@
 #pragma once
 #include "common.h"
 #include <string.h>
+#include <iostream>
 
 class MemPool {
  public:
@@ -14,11 +15,13 @@ class MemPool {
   ~MemPool() = delete;
   void *AllocMemory(size_t sMemorySize);
   void FreeMemory(void *ptrMemoryBlock);
+  void PrintInfo();
+  void PrintChunkInfo();
 
   friend void CreateMemoryPool(void *pBuf, size_t sBufSize, MemPool *&mem_pool);
 
  private:
-  void *memory;
+  void *memory_;
   size_t size_;
 
   map_unit *chunk_map_;     // 内存映射表
@@ -35,7 +38,7 @@ class MemPool {
 
  public:
   void *&getMemory() {
-    return memory;
+    return memory_;
   }
 };
 

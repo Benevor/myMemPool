@@ -5,7 +5,6 @@
 // TODO: 头文件互相引用怎么办？
 //#include "MemPool.h"
 #include "utils.h"
-#include <iostream>
 
 // alloc 找 free_chunk_
 void *MemPool::AllocMemory(size_t sMemorySize) {
@@ -27,7 +26,7 @@ void *MemPool::AllocMemory(size_t sMemorySize) {
   if (tmp->map_addr->count * MINUNITSIZE == sMemorySize) {
     // 当请求的内存大小与当前chunk中的内存大小相同时
     // 直接从 free_chunk_ 链表中删除此chunk
-    size_t current_index = (tmp->map_addr - this->chunk_map_) / sizeof(map_unit);
+    size_t current_index = tmp->map_addr - this->chunk_map_;
     Utils::delete_chunk(this->free_chunk_, tmp);
     tmp->map_addr->chunk_addr = nullptr; // nullptr表示当前内存块已被分配
 
@@ -49,7 +48,7 @@ void *MemPool::AllocMemory(size_t sMemorySize) {
     current_map->count = sMemorySize / MINUNITSIZE;
     current_map->chunk_addr = nullptr; // nullptr表示当前内存块已被分配
 
-    size_t current_index = (current_map - this->chunk_map_) / sizeof(map_unit);
+    size_t current_index = current_map - this->chunk_map_;
     this->chunk_map_[current_index + current_map->count - 1].start = current_index;
 
     // 当前block被一分为二，更新第二个block中的内容
@@ -171,18 +170,19 @@ void CreateMemoryPool(void *pBuf, size_t sBufSize, MemPool *&mem_pool) {
   size_t meta_size = sizeof(MemPool);
 
   // 初始化 chunk_map_ 与 chunk_pool_ （保证 chunk 数量大于真实数据 block 数量）
-  mem_pool->chunk_pool_count_ = (sBufSize - meta_size + MINUNITSIZE - 1) / MINUNITSIZE;
-  mem_pool->chunk_map_count_ = (sBufSize - meta_size + MINUNITSIZE - 1) / MINUNITSIZE;
+  size_t ond_size = MINUNITSIZE + sizeof(memory_chunk) + sizeof(map_unit);
+  mem_pool->chunk_pool_count_ = (sBufSize - meta_size + ond_size - 1) / ond_size;
+  mem_pool->chunk_map_count_ = (sBufSize - meta_size + ond_size - 1) / ond_size;
   mem_pool->chunk_map_ = (map_unit *) ((char *) pBuf + meta_size);
   mem_pool->chunk_pool_ =
       (memory_chunk *) ((char *) pBuf + meta_size + sizeof(map_unit) * mem_pool->chunk_map_count_);
 
   // 初始化 memory
-  mem_pool->memory = (char *) pBuf + meta_size + sizeof(map_unit) * mem_pool->chunk_map_count_
+  mem_pool->memory_ = (char *) pBuf + meta_size + sizeof(map_unit) * mem_pool->chunk_map_count_
       + sizeof(memory_chunk) * mem_pool->chunk_pool_count_;
   mem_pool->size_ = sBufSize - meta_size - sizeof(map_unit) * mem_pool->chunk_map_count_
       - sizeof(memory_chunk) * mem_pool->chunk_pool_count_;
-  size_t align = Utils::check_align_addr(mem_pool->memory);
+  size_t align = Utils::check_align_addr(mem_pool->memory_);
   mem_pool->size_ -= align;
   mem_pool->size_ = Utils::check_align_block(mem_pool->size_);
   mem_pool->mem_block_count_ = mem_pool->size_ / MINUNITSIZE;
@@ -203,11 +203,41 @@ void CreateMemoryPool(void *pBuf, size_t sBufSize, MemPool *&mem_pool) {
   // 初始化 chunk_map_
   mem_pool->chunk_map_[0].count = mem_pool->mem_block_count_;
   mem_pool->chunk_map_[0].chunk_addr = tmp;
-  mem_pool->chunk_map_[mem_pool->mem_block_count_ - 1].start = 0;  // 理解了
+  mem_pool->chunk_map_[mem_pool->mem_block_count_ - 1].start = 0;
 
-  std::cout << mem_pool->chunk_map_ << std::endl;
-  std::cout << &mem_pool->chunk_map_[0] << std::endl;
-  std::cout << &mem_pool->chunk_map_[1] << std::endl;
-  std::cout << &mem_pool->chunk_map_[2] << std::endl;
+}
 
+void MemPool::PrintInfo() {
+  std::cout << "======================== Memory Pool Info ========================" << std::endl;
+  std::cout << "meta_size: " << sizeof(MemPool) << std::endl;
+  std::cout << "chunk_pool_count_: " << this->chunk_pool_count_ << std::endl;
+  std::cout << "chunk_map_count_: " << this->chunk_map_count_ << std::endl;
+  printf("chunk_map_: %p\n", this->chunk_map_);
+  printf("chunk_pool_: %p\n", this->chunk_pool_);
+  printf("memory: %p\n", this->memory_);
+  std::cout << "memory size: " << this->size_ << std::endl;
+  std::cout << "mem_block_count_: " << this->mem_block_count_ << std::endl;
+
+  printf("free_chunk_: %p\n", this->free_chunk_);
+  std::cout << "free_chunk_count_: " << this->free_chunk_count_ << std::endl;
+
+  std::cout << "mem_used_size_: " << this->mem_used_size_ << std::endl;
+}
+
+void MemPool::PrintChunkInfo() {
+  std::cout << "======================== Free Chunk Info ========================" << std::endl;
+  printf("free_chunk_: %p\n", this->free_chunk_);
+  std::cout << "free_chunk_count_: " << this->free_chunk_count_ << std::endl;
+  auto tmp = this->free_chunk_;
+  for (int i = 0; i < free_chunk_count_; ++i) {
+    std::cout << "\n============ Free Chunk " << i << " ============" << std::endl;
+    std::cout << "chunk addr:" << tmp << std::endl;
+    std::cout << "map addr:" << tmp->map_addr << std::endl;
+    std::cout << "map index:" << tmp->map_addr - this->chunk_map_ << std::endl;
+    std::cout << "unit count:" << tmp->map_addr->count << std::endl;
+    std::cout << "unit chunk addr:" << tmp->map_addr->chunk_addr << std::endl;
+    tmp = tmp->next;
+  }
+  std::cout << "======================== Chunk Info ========================" << std::endl;
+  std::cout << "chunk_pool_count_:" << this->chunk_pool_count_ << std::endl;
 }
