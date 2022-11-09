@@ -15,7 +15,7 @@ void CentralMemPool::AddThread() {
   std::cout << ss.str();
   thread_mutex_.lock();
   if (thread_to_mem_pool_.count(pid) != 0) {
-    std::cout << "this thread existed !" << std::endl;
+    std::cout << "this thread existed !\n";
     thread_mutex_.unlock();
     return;
   }
@@ -59,7 +59,7 @@ void *CentralMemPool::MyMalloc(size_t size) {
   auto pid = std::this_thread::get_id();
   thread_mutex_.lock_shared();
   if (thread_to_mem_pool_.count(pid) == 0 || thread_to_mem_pool_[pid].empty()) {
-    std::cout << "unexpected error !" << std::endl;
+    std::cout << "unexpected error !\n";
     thread_mutex_.unlock_shared();
     return nullptr;
   }
@@ -71,7 +71,9 @@ void *CentralMemPool::MyMalloc(size_t size) {
     over_mem tmp = {ptr, size};
     thread_to_over_[pid].emplace_back(tmp);
     thread_mutex_.unlock();
-    std::cout << "thread " << pid << " malloc " << size << "from sys success" << std::endl;
+    std::stringstream ss;
+    ss << "thread " << pid << " malloc " << size << "from sys success\n";
+    std::cout << ss.str();
     return ptr;
   }
   // 尝试在该线程现有的mem_pool中进行申请
@@ -83,7 +85,9 @@ void *CentralMemPool::MyMalloc(size_t size) {
       ptr_to_mem_pool_.emplace(ptr, mem_pool);
       ptr_mutex_.unlock();
       thread_mutex_.unlock_shared();
-      std::cout << "thread " << pid << " malloc " << size << " from mem pool success" << std::endl;
+      std::stringstream ss;
+      ss << "thread " << pid << " malloc " << size << " from mem pool success\n";
+      std::cout << ss.str();
       return ptr;
     }
   }
@@ -105,7 +109,10 @@ void *CentralMemPool::MyMalloc(size_t size) {
     ptr_to_mem_pool_.emplace(ptr, mem_pool);
   }
   thread_mutex_.unlock();
-  std::cout << "thread " << pid << " malloc " << size << " from mem pool success, after add mem pool" << std::endl;
+
+  std::stringstream ss;
+  ss << "thread " << pid << " malloc " << size << " from mem pool success, after add mem pool\n";
+  std::cout << ss.str();
   return ptr;
 }
 
@@ -113,7 +120,7 @@ void CentralMemPool::MyFree(void *p) {
   auto pid = std::this_thread::get_id();
   thread_mutex_.lock_shared();
   if (thread_to_mem_pool_.count(pid) == 0 || thread_to_mem_pool_[pid].empty()) {
-    std::cout << "unexpected error !" << std::endl;
+    std::cout << "unexpected error !\n";
     thread_mutex_.unlock_shared();
     return;
   }
@@ -125,7 +132,9 @@ void CentralMemPool::MyFree(void *p) {
     ptr_mutex_.unlock();
     mem_pool->FreeMemory(p);
     thread_mutex_.unlock_shared();
-    std::cout << "thread " << pid << " free to mem pool success" << std::endl;
+    std::stringstream ss;
+    ss << "thread " << pid << " free to mem pool success\n";
+    std::cout << ss.str();
     if (mem_pool->UsedSize() == 0) {
       thread_mutex_.lock();
       size_t index = 0;
@@ -139,7 +148,10 @@ void CentralMemPool::MyFree(void *p) {
         // 每个线程至少留一个 mem pool
         thread_to_mem_pool_[pid].erase(thread_to_mem_pool_[pid].begin() + index);
         free_buff_.emplace_back((void *) mem_pool);
-        std::cout << "thread " << pid << " gc index:" << index << " mem pool" << std::endl;
+
+        std::stringstream ss;
+        ss << "thread " << pid << " gc index:" << index << " mem pool\n";
+        std::cout << ss.str();
       }
       thread_mutex_.unlock();
     }
@@ -152,12 +164,14 @@ void CentralMemPool::MyFree(void *p) {
       if (over.addr == p) {
         FreeToSys(p, over.size);
         thread_mutex_.unlock_shared();
-        std::cout << "thread " << pid << " free to sys success" << std::endl;
+        std::stringstream ss;
+        ss << "thread " << pid << " free to sys success\n";
+        std::cout << ss.str();
         return;
       }
     }
   }
-  std::cout << "invalid mem addr !" << std::endl;
+  std::cout << "invalid mem addr !\n";
   thread_mutex_.unlock_shared();
 }
 
@@ -165,7 +179,7 @@ void *CentralMemPool::AllocFromSys(size_t buff_size) {
   size_t sBufSize = buff_size;
   void *pBuf = mmap(NULL, buff_size, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (pBuf == MAP_FAILED) {
-    std::cout << " AllocFromSys failed " << std::endl;
+    std::cout << " AllocFromSys failed !\n";
     return nullptr;
   }
   return pBuf;
@@ -173,7 +187,7 @@ void *CentralMemPool::AllocFromSys(size_t buff_size) {
 
 bool CentralMemPool::FreeToSys(void *pBuf, size_t buff_size) {
   if (munmap(pBuf, buff_size) == -1) {
-    std::cout << " FreeToSys failed" << std::endl;
+    std::cout << " FreeToSys failed !\n";
     return false;
   }
   return true;
@@ -207,7 +221,7 @@ CentralMemPool::~CentralMemPool() {
 size_t CentralMemPool::MaxAllocSizeInMemPool() {
   auto pid = std::this_thread::get_id();
   if (thread_to_mem_pool_.count(pid) == 0 || thread_to_mem_pool_[pid].empty()) {
-    std::cout << "unexpected error !" << std::endl;
+    std::cout << "unexpected error !\n";
     thread_mutex_.unlock_shared();
     return -1;
   }
