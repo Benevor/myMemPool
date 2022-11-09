@@ -3,22 +3,25 @@
 //
 #include "CentralMemPool.h"
 
-void Allocate1(int id) {
-  CentralMemPool cen;
-  cen.AddThread(id);
+void thread_alloc(CentralMemPool *central_pool) {
+  central_pool->AddThread();
+  auto ptr = central_pool->MyMalloc(MINUNITSIZE);
+  central_pool->MyFree(ptr);
+  central_pool->DeleteThread();
 }
 
-void Allocate2(int id) {
-  CentralMemPool cen;
-  cen.AddThread(id);
+void thread_alloc_2(CentralMemPool *central_pool) {
+  central_pool->AddThread();
+  central_pool->DeleteThread();
 }
 
 void add_thread_test() {
-  std::cout << "fa:" << std::this_thread::get_id() << std::endl;
-  std::thread t1(Allocate1, 1);
-  std::thread t2(Allocate1, 2);
+  CentralMemPool *central_pool = new CentralMemPool();
+  std::thread t1(thread_alloc, central_pool);
+  std::thread t2(thread_alloc, central_pool);
   t1.join();
   t2.join();
+  delete central_pool;
 }
 
 int main(int argc, char *argv[]) {

@@ -10,11 +10,15 @@
 #include "ThreadMemPool.h"
 #include <sys/types.h>
 #include <map>
+#include <mutex>
+#include <shared_mutex>
 
 class CentralMemPool {
  public:
-  void AddThread(int id);
-  void DeleteThread(int id);
+  CentralMemPool() = default;
+  ~CentralMemPool();
+  void AddThread();
+  void DeleteThread();
   void *AllocFromSys(size_t buff_size);
   bool FreeToSys(void *pBuf, size_t buff_size);
 
@@ -27,9 +31,13 @@ class CentralMemPool {
   //  std::vector<ThreadMemPool *> all_thread_mem_pools_;
   size_t fix_size_ = MEMORY_POOL_BYTE_SIZE;
   std::vector<void *> free_buff_; // 空闲内存空间链表，固定大小
+
   std::map<void *, ThreadMemPool *> ptr_to_mem_pool_; // 记录空间从哪个ThreadMemPool获得
+  std::shared_mutex ptr_mutex_;
+
   std::map<std::thread::id, std::vector<over_mem>> thread_to_over_;        // 加读写锁 超大空间
   std::map<std::thread::id, std::vector<ThreadMemPool *>> thread_to_mem_pool_;  // 加读写锁
+  std::shared_mutex thread_mutex_;
 };
 
 #endif //MEMPOOL_SRC_CENTRALMEMPOOL_H_
