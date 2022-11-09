@@ -163,7 +163,7 @@ void ThreadMemPool::FreeMemory(void *ptrMemoryBlock) {
 }
 
 void CreateMemoryPool(void *pBuf, size_t sBufSize, ThreadMemPool *&mem_pool) {
-  // 确保分配的内存已经清空
+  // 确保分配的内存已经清空（后面实现多线程的时候，这里传入的空间可能是不干净的）
   memset(pBuf, 0, sBufSize);
   // 将该内存空间进行类型转换
   mem_pool = reinterpret_cast<ThreadMemPool *>(pBuf);

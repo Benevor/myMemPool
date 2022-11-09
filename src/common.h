@@ -7,10 +7,13 @@
 #pragma once
 #include <stdlib.h>
 #include <vector>
+#include <thread>
+#include <sys/mman.h>
 
 #define MINUNITSIZE 64
 #define ADDR_ALIGN 8
 #define SIZE_ALIGN MINUNITSIZE
+#define MEMORY_POOL_BYTE_SIZE 5*1024*1024 //5M = 5M * 1024kb * 1024bytes
 
 struct memory_chunk;
 // 任意一块大小的内存都会被向上取整到block大小的整数倍
@@ -26,5 +29,10 @@ typedef struct memory_chunk {
   memory_chunk *pre;
   memory_chunk *next;
 } memory_chunk;
+
+typedef struct over_size_mem {
+  void *addr;
+  size_t size;
+} over_mem;
 
 #endif //MYMEMPOOL_SRC_COMMON_H_

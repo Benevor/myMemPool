@@ -2,11 +2,9 @@
 // Created by 26473 on 2022/11/2.
 //
 
-#include <sys/mman.h>
 #include "ThreadMemPool.h"
 #include <iostream>
 using namespace std;
-#define MEMORY_POOL_BYTE_SIZE 5*1024*1024 //5M = 5M * 1024kb * 1024bytes
 
 void test_int_alloc() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
@@ -199,7 +197,3 @@ void test_overflow() {
   munmap(pBuf, sBufSize);
 }
 
-int main(int argc, char *argv[]) {
-  test_overflow();
-  return 0;
-}
