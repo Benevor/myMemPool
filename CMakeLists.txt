@@ -7,13 +7,15 @@ set(CMAKE_CXX_STANDARD 11)
 # 头文件
 include_directories(
         ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_SOURCE_DIR}/src/MemPool
+        ${PROJECT_SOURCE_DIR}/src/ThreadMemPool
+        ${PROJECT_SOURCE_DIR}/src/CentralMemPool
         ${PROJECT_SOURCE_DIR}/test
 )
 
 # 源文件
 file(GLOB_RECURSE MemPool
-        ${PROJECT_SOURCE_DIR}/src/MemPool/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/ThreadMemPool/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/CentralMemPool/*.cpp
         ${PROJECT_SOURCE_DIR}/test/*.cpp
         )
 

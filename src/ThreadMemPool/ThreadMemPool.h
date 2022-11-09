@@ -2,23 +2,24 @@
 // Created by 26473 on 2022/11/2.
 //
 
-#ifndef MYMEMPOOL_SRC_MEMPOOL_MEMPOOL_H_
-#define MYMEMPOOL_SRC_MEMPOOL_MEMPOOL_H_
+#ifndef MYThreadMemPool_SRC_ThreadMemPool_ThreadMemPool_H_
+#define MYThreadMemPool_SRC_ThreadMemPool_ThreadMemPool_H_
 #pragma once
 #include "common.h"
 #include <string.h>
 #include <iostream>
 
-class MemPool {
+class ThreadMemPool {
  public:
-  MemPool() = delete;
-  ~MemPool() = delete;
+  ThreadMemPool() = delete;
+  ~ThreadMemPool() = delete;
   void *AllocMemory(size_t sMemorySize);
   void FreeMemory(void *ptrMemoryBlock);
   void PrintInfo();
   void PrintChunkInfo();
+  size_t MaxAllocSize();
 
-  friend void CreateMemoryPool(void *pBuf, size_t sBufSize, MemPool *&mem_pool);
+  friend void CreateMemoryPool(void *pBuf, size_t sBufSize, ThreadMemPool *&mem_pool);
 
  private:
   void *memory_;
@@ -42,6 +43,6 @@ class MemPool {
   }
 };
 
-void CreateMemoryPool(void *pBuf, size_t sBufSize, MemPool *&mem_pool);
+void CreateMemoryPool(void *pBuf, size_t sBufSize, ThreadMemPool *&mem_pool);
 
-#endif //MYMEMPOOL_SRC_MEMPOOL_MEMPOOL_H_
+#endif //MYThreadMemPool_SRC_ThreadMemPool_ThreadMemPool_H_

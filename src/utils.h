@@ -2,7 +2,7 @@
 // Created by 26473 on 2022/11/2.
 //
 #pragma once
-#include "MemPool.h"
+#include "ThreadMemPool.h"
 class Utils {
  public:
   static size_t check_align_addr(void *&pBuf) {
@@ -105,13 +105,13 @@ class Utils {
     element->next = nullptr;
   }
 
-  static void *index2addr(MemPool *mem_pool, size_t index) {
+  static void *index2addr(ThreadMemPool *mem_pool, size_t index) {
     char *p = (char *) (mem_pool->getMemory());
     void *ret = (void *) (p + index * MINUNITSIZE);
     return ret;
   }
 
-  static size_t addr2index(MemPool *mem_pool, void *addr) {
+  static size_t addr2index(ThreadMemPool *mem_pool, void *addr) {
     char *start = (char *) (mem_pool->getMemory());
     char *p = (char *) addr;
     size_t index = (p - start) / MINUNITSIZE;

@@ -6,6 +6,7 @@
 #define MYMEMPOOL_SRC_COMMON_H_
 #pragma once
 #include <stdlib.h>
+#include <vector>
 
 #define MINUNITSIZE 64
 #define ADDR_ALIGN 8

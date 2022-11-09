@@ -3,11 +3,12 @@
 //
 
 // TODO: 头文件互相引用怎么办？
-//#include "MemPool.h"
+//#include "ThreadMemPool.h"
 #include "utils.h"
+#include <math.h>
 
 // alloc 找 free_chunk_
-void *MemPool::AllocMemory(size_t sMemorySize) {
+void *ThreadMemPool::AllocMemory(size_t sMemorySize) {
   sMemorySize = Utils::check_align_size(sMemorySize);
   size_t index = 0;
   memory_chunk *tmp = this->free_chunk_;
@@ -64,7 +65,7 @@ void *MemPool::AllocMemory(size_t sMemorySize) {
 }
 
 // free 找 chunk_map_
-void MemPool::FreeMemory(void *ptrMemoryBlock) {
+void ThreadMemPool::FreeMemory(void *ptrMemoryBlock) {
   size_t current_index = Utils::addr2index(this, ptrMemoryBlock);
   size_t size = this->chunk_map_[current_index].count * MINUNITSIZE;
   // 判断与当前释放的内存块相邻的内存块是否可以与当前释放的内存块合并
@@ -161,18 +162,18 @@ void MemPool::FreeMemory(void *ptrMemoryBlock) {
   this->mem_used_size_ -= size;
 }
 
-void CreateMemoryPool(void *pBuf, size_t sBufSize, MemPool *&mem_pool) {
+void CreateMemoryPool(void *pBuf, size_t sBufSize, ThreadMemPool *&mem_pool) {
   // 确保分配的内存已经清空
   memset(pBuf, 0, sBufSize);
   // 将该内存空间进行类型转换
-  mem_pool = reinterpret_cast<MemPool *>(pBuf);
+  mem_pool = reinterpret_cast<ThreadMemPool *>(pBuf);
   // 拿到指针等元数据的空间
-  size_t meta_size = sizeof(MemPool);
+  size_t meta_size = sizeof(ThreadMemPool);
 
   // 初始化 chunk_map_ 与 chunk_pool_ （保证 chunk 数量大于真实数据 block 数量）
   size_t ond_size = MINUNITSIZE + sizeof(memory_chunk) + sizeof(map_unit);
-  mem_pool->chunk_pool_count_ = (sBufSize - meta_size + ond_size - 1) / ond_size;
-  mem_pool->chunk_map_count_ = (sBufSize - meta_size + ond_size - 1) / ond_size;
+  mem_pool->chunk_pool_count_ = (sBufSize - meta_size) / ond_size;
+  mem_pool->chunk_map_count_ = (sBufSize - meta_size) / ond_size;
   mem_pool->chunk_map_ = (map_unit *) ((char *) pBuf + meta_size);
   mem_pool->chunk_pool_ =
       (memory_chunk *) ((char *) pBuf + meta_size + sizeof(map_unit) * mem_pool->chunk_map_count_);
@@ -185,7 +186,7 @@ void CreateMemoryPool(void *pBuf, size_t sBufSize, MemPool *&mem_pool) {
   size_t align = Utils::check_align_addr(mem_pool->memory_);
   mem_pool->size_ -= align;
   mem_pool->size_ = Utils::check_align_block(mem_pool->size_);
-  mem_pool->mem_block_count_ = mem_pool->size_ / MINUNITSIZE;
+  mem_pool->mem_block_count_ = std::min(mem_pool->size_ / MINUNITSIZE, mem_pool->chunk_map_count_);
 
   // 链表化chunk_pool_ （双向循环链表）
   mem_pool->chunk_pool_ = Utils::create_list(mem_pool->chunk_pool_, mem_pool->chunk_pool_count_);
@@ -207,9 +208,13 @@ void CreateMemoryPool(void *pBuf, size_t sBufSize, MemPool *&mem_pool) {
 
 }
 
-void MemPool::PrintInfo() {
+size_t ThreadMemPool::MaxAllocSize() {
+  return this->mem_block_count_;
+}
+
+void ThreadMemPool::PrintInfo() {
   std::cout << "======================== Memory Pool Info ========================" << std::endl;
-  std::cout << "meta_size: " << sizeof(MemPool) << std::endl;
+  std::cout << "meta_size: " << sizeof(ThreadMemPool) << std::endl;
   std::cout << "chunk_pool_count_: " << this->chunk_pool_count_ << std::endl;
   std::cout << "chunk_map_count_: " << this->chunk_map_count_ << std::endl;
   printf("chunk_map_: %p\n", this->chunk_map_);
@@ -224,7 +229,7 @@ void MemPool::PrintInfo() {
   std::cout << "mem_used_size_: " << this->mem_used_size_ << std::endl;
 }
 
-void MemPool::PrintChunkInfo() {
+void ThreadMemPool::PrintChunkInfo() {
   std::cout << "======================== Free Chunk Info ========================" << std::endl;
   printf("free_chunk_: %p\n", this->free_chunk_);
   std::cout << "free_chunk_count_: " << this->free_chunk_count_ << std::endl;
