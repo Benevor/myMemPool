@@ -20,12 +20,15 @@ void CentralMemPool::AddThread() {
     return;
   }
   void *ptr = nullptr;
+  // 优先从 free_buff_ 中获得空间
   if (free_buff_.empty()) {
+    // free_buff_ 为空，则直接向系统申请
     ptr = AllocFromSys(fix_size_);
   } else {
     ptr = free_buff_.back();
     free_buff_.pop_back();
   }
+  // 创建 ThreadMemPool 实例，并分配给该线程
   ThreadMemPool *mem_pool = nullptr;
   CreateMemoryPool(ptr, fix_size_, mem_pool);
   thread_to_mem_pool_[pid].emplace_back(mem_pool);
@@ -40,12 +43,16 @@ void CentralMemPool::DeleteThread() {
   ss << "\n";
   std::cout << ss.str();
   thread_mutex_.lock();
+  // 释放该线程占有的所有 ThreadMemPool，释放给 free_buff_
   if (thread_to_mem_pool_.count(pid) != 0) {
     for (auto &t: thread_to_mem_pool_[pid]) {
+      // 不需要清除，下次拿出来用的时候会清除内容
       free_buff_.emplace_back((void *) t);
     }
     thread_to_mem_pool_.erase(pid);
   }
+
+  // 释放该线程占用的所有超大空间，释放给系统
   if (thread_to_over_.count(pid) != 0) {
     for (auto &t: thread_to_over_[pid]) {
       FreeToSys(t.addr, t.size);
@@ -63,8 +70,8 @@ void *CentralMemPool::MyMalloc(size_t size) {
     thread_mutex_.unlock_shared();
     return nullptr;
   }
-  // 申请的空间太大
-  if (size > thread_to_mem_pool_[pid][0]->MaxAllocSize() * MINUNITSIZE) {
+  // 申请的空间太大，直接向系统申请
+  if (size > thread_to_mem_pool_[pid][0]->MaxAllocSize() * BLOCK_SIZE) {
     thread_mutex_.unlock_shared();
     thread_mutex_.lock();
     auto ptr = AllocFromSys(size);
@@ -76,7 +83,8 @@ void *CentralMemPool::MyMalloc(size_t size) {
     std::cout << ss.str();
     return ptr;
   }
-  // 尝试在该线程现有的mem_pool中进行申请
+
+  // 尝试在该线程现有的 ThreadMemPool 中进行申请
   auto mem_pools = thread_to_mem_pool_[pid];
   for (auto &mem_pool: mem_pools) {
     auto ptr = mem_pool->AllocMemory(size);
@@ -93,7 +101,7 @@ void *CentralMemPool::MyMalloc(size_t size) {
   }
   thread_mutex_.unlock_shared();
   thread_mutex_.lock();
-  // 为该线程添加一个mem pool
+  // 现有的 ThreadMemPool 均申请失败，则为该线程添加一个 ThreadMemPool
   void *ptr = nullptr;
   if (free_buff_.empty()) {
     ptr = AllocFromSys(fix_size_);
@@ -124,7 +132,7 @@ void CentralMemPool::MyFree(void *p) {
     thread_mutex_.unlock_shared();
     return;
   }
-  // 在该线程的meme pool中寻找
+  // 在该线程的 ThreadMemPool 中寻找
   if (ptr_to_mem_pool_.count(p) != 0) {
     ptr_mutex_.lock();
     auto mem_pool = ptr_to_mem_pool_[p];
@@ -135,6 +143,7 @@ void CentralMemPool::MyFree(void *p) {
     std::stringstream ss;
     ss << "thread " << pid << " free to mem pool success\n";
     std::cout << ss.str();
+    // 如果释放后，该 ThreadMemPool 变空，则回收该 ThreadMemPool
     if (mem_pool->UsedSize() == 0) {
       thread_mutex_.lock();
       size_t index = 0;
@@ -145,7 +154,7 @@ void CentralMemPool::MyFree(void *p) {
         index++;
       }
       if (thread_to_mem_pool_[pid].size() > 1) {
-        // 每个线程至少留一个 mem pool
+        // 每个线程至少留一个 ThreadMemPool
         thread_to_mem_pool_[pid].erase(thread_to_mem_pool_[pid].begin() + index);
         free_buff_.emplace_back((void *) mem_pool);
 
@@ -157,7 +166,7 @@ void CentralMemPool::MyFree(void *p) {
     }
     return;
   }
-  // 尝试在大内存中寻找
+  // 尝试在大内存中寻找， 并释放
   if (thread_to_over_.count(pid) != 0) {
     auto overs = thread_to_over_[pid];
     for (auto &over: overs) {

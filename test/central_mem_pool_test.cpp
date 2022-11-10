@@ -4,22 +4,27 @@
 #include "CentralMemPool.h"
 #include <cmath>
 
+// 单个 CentralMemPool 的测试
+// 多线程、多 ThreadMemPool 的并发测试
+
+// 简单内存申请与释放
 void thread_alloc(CentralMemPool *central_pool) {
   central_pool->AddThread();
-  auto ptr = central_pool->MyMalloc(MINUNITSIZE);
+  auto ptr = central_pool->MyMalloc(BLOCK_SIZE);
   central_pool->MyFree(ptr);
   central_pool->DeleteThread();
 }
 
+// 涉及单个线程的多个ThreadMemPool申请与释放
 void thread_cc(CentralMemPool *central_pool) {
   central_pool->AddThread();
   std::vector<void *> ptrs;
   for (int i = 0; i < 4; ++i) {
     if (i == 3) {
-      auto ptr = central_pool->MyMalloc(central_pool->MaxAllocSizeInMemPool() * MINUNITSIZE);
+      auto ptr = central_pool->MyMalloc(central_pool->MaxAllocSizeInMemPool() * BLOCK_SIZE);
       ptrs.emplace_back(ptr);
     } else {
-      auto ptr = central_pool->MyMalloc(MINUNITSIZE * pow(10, i));
+      auto ptr = central_pool->MyMalloc(BLOCK_SIZE * pow(10, i));
       ptrs.emplace_back(ptr);
     }
   }
@@ -31,27 +36,30 @@ void thread_cc(CentralMemPool *central_pool) {
   central_pool->DeleteThread();
 }
 
+// 回收线程的空ThreadMemPool
 void thread_gc(CentralMemPool *central_pool) {
   central_pool->AddThread();
   if (central_pool->MaxAllocSizeInMemPool() == -1) {
     std::cout << "thread gc fail !" << std::endl;
   }
-  auto ptr1 = central_pool->MyMalloc(central_pool->MaxAllocSizeInMemPool() * MINUNITSIZE);
-  auto ptr2 = central_pool->MyMalloc(MINUNITSIZE);
+  auto ptr1 = central_pool->MyMalloc(central_pool->MaxAllocSizeInMemPool() * BLOCK_SIZE);
+  auto ptr2 = central_pool->MyMalloc(BLOCK_SIZE);
   central_pool->MyFree(ptr2);
   central_pool->MyFree(ptr1);
   central_pool->DeleteThread();
 }
 
+// 尝试重复释放同一个指针对应的地址空间
 void thread_dup_free(CentralMemPool *central_pool) {
   central_pool->AddThread();
-  auto ptr = central_pool->MyMalloc(MINUNITSIZE);
+  auto ptr = central_pool->MyMalloc(BLOCK_SIZE);
   central_pool->MyFree(ptr);
   central_pool->MyFree(ptr);
 
   central_pool->DeleteThread();
 }
 
+// 测试：单线程简单gc测试
 void simple_gc_test() {
   auto central_pool = new CentralMemPool();
   std::thread t1(thread_gc, central_pool);
@@ -59,6 +67,7 @@ void simple_gc_test() {
   delete central_pool;
 }
 
+// 测试：简单并发测试
 void simple_cc_test() {
   auto central_pool = new CentralMemPool();
   std::thread t1(thread_alloc, central_pool);
@@ -68,6 +77,7 @@ void simple_cc_test() {
   delete central_pool;
 }
 
+// 测试：并发gc测试
 void cc_gc_test() {
   auto central_pool = new CentralMemPool();
   std::thread t1(thread_gc, central_pool);
@@ -77,6 +87,7 @@ void cc_gc_test() {
   delete central_pool;
 }
 
+// 测试：并发测试
 void cc_test() {
   auto central_pool = new CentralMemPool();
   std::thread t1(thread_cc, central_pool);
@@ -88,6 +99,7 @@ void cc_test() {
   delete central_pool;
 }
 
+// 测试：测试重复内存释放
 void duplicate_free_test() {
   auto central_pool = new CentralMemPool();
   std::thread t1(thread_dup_free, central_pool);

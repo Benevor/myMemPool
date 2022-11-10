@@ -5,7 +5,9 @@
 #include "ThreadMemPool.h"
 #include <iostream>
 using namespace std;
+// 单个 ThreadMemPool 的测试
 
+// 测试：申请10个int大小的空间，并释放
 void int_alloc_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -35,6 +37,7 @@ void int_alloc_test() {
   munmap(pBuf, sBufSize);
 }
 
+// 测试：查看创建的ThreadMemPool的信息
 void print_info_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -49,6 +52,7 @@ void print_info_test() {
   munmap(pBuf, sBufSize);
 }
 
+// 测试：连续申请若干 BLOCK_SIZE 大小的空间，并释放
 void seq_alloc_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -64,7 +68,7 @@ void seq_alloc_test() {
   vector<void *> ptrs;
   cout << "============ test_seq_print_info =========" << endl;
   for (int i = 0; i < 5; ++i) {
-    void *ptr = mem_pool->AllocMemory(MINUNITSIZE);
+    void *ptr = mem_pool->AllocMemory(BLOCK_SIZE);
     ptrs.emplace_back(ptr);
     cout << ptr << endl;
   }
@@ -76,6 +80,7 @@ void seq_alloc_test() {
   munmap(pBuf, sBufSize);
 }
 
+// 测试：连续申请若干 BLOCK_SIZE-1 大小的空间，并释放
 void seq_alloc_align_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -91,7 +96,7 @@ void seq_alloc_align_test() {
   vector<void *> ptrs;
   cout << "============ test_seq_print_info =========" << endl;
   for (int i = 0; i < 5; ++i) {
-    void *ptr = mem_pool->AllocMemory(MINUNITSIZE - 1);
+    void *ptr = mem_pool->AllocMemory(BLOCK_SIZE - 1);
     ptrs.emplace_back(ptr);
     cout << ptr << endl;
   }
@@ -103,6 +108,7 @@ void seq_alloc_align_test() {
   munmap(pBuf, sBufSize);
 }
 
+// 测试：验证不相邻的外部碎片不能合并
 void not_merge_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -117,7 +123,7 @@ void not_merge_test() {
   vector<void *> ptrs;
   cout << "============ test_seq_print_info =========" << endl;
   for (int i = 0; i < 5; ++i) {
-    void *ptr = mem_pool->AllocMemory(MINUNITSIZE - 1);
+    void *ptr = mem_pool->AllocMemory(BLOCK_SIZE - 1);
     ptrs.emplace_back(ptr);
     cout << ptr << endl;
   }
@@ -127,6 +133,7 @@ void not_merge_test() {
   munmap(pBuf, sBufSize);
 }
 
+// 测试：验证相邻外部碎片可以合并
 void merge_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -141,7 +148,7 @@ void merge_test() {
   vector<void *> ptrs;
   cout << "============ test_seq_print_info =========" << endl;
   for (int i = 0; i < 5; ++i) {
-    void *ptr = mem_pool->AllocMemory(MINUNITSIZE - 1);
+    void *ptr = mem_pool->AllocMemory(BLOCK_SIZE - 1);
     ptrs.emplace_back(ptr);
     cout << ptr << endl;
   }
@@ -155,6 +162,7 @@ void merge_test() {
   munmap(pBuf, sBufSize);
 }
 
+// 测试：验证 mem_pool->MaxAllocSize() * BLOCK_SIZE 大小空间的申请与释放
 void max_size_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -166,7 +174,7 @@ void max_size_test() {
   ThreadMemPool *mem_pool = nullptr;
   CreateMemoryPool(pBuf, sBufSize, mem_pool);
   cout << "============ test_max =========" << endl;
-  void *ptr = mem_pool->AllocMemory(mem_pool->MaxAllocSize() * MINUNITSIZE);
+  void *ptr = mem_pool->AllocMemory(mem_pool->MaxAllocSize() * BLOCK_SIZE);
   cout << "ptr:" << ptr << endl;
   mem_pool->PrintChunkInfo();
   mem_pool->FreeMemory(ptr);
@@ -174,6 +182,7 @@ void max_size_test() {
   munmap(pBuf, sBufSize);
 }
 
+// 测试：验证超过 ThreadMemPool 最大容许空间，内存申请失败
 void overflow_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -185,7 +194,7 @@ void overflow_test() {
   ThreadMemPool *mem_pool = nullptr;
   CreateMemoryPool(pBuf, sBufSize, mem_pool);
   cout << "============ test_max =========" << endl;
-  void *ptr = mem_pool->AllocMemory(mem_pool->MaxAllocSize() * MINUNITSIZE + 1);
+  void *ptr = mem_pool->AllocMemory(mem_pool->MaxAllocSize() * BLOCK_SIZE + 1);
   cout << "ptr:" << ptr << endl;
   if (ptr != nullptr) {
     mem_pool->PrintChunkInfo();
@@ -197,6 +206,7 @@ void overflow_test() {
   munmap(pBuf, sBufSize);
 }
 
+// 测试：验证 mem_pool->MaxAllocSize() 个 BLOCK_SIZE-1 的内存空间申请与释放，并复现 ThreadMemPool 用完的场景
 void max_num_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -211,7 +221,7 @@ void max_num_test() {
   std::vector<void *> ptrs;
   std::cout << "max valid num: " << mem_pool->MaxAllocSize() << std::endl;
   for (int i = 0; i <= mem_pool->MaxAllocSize(); ++i) {
-    void *ptr = mem_pool->AllocMemory(MINUNITSIZE - 1);
+    void *ptr = mem_pool->AllocMemory(BLOCK_SIZE - 1);
     if (ptr == nullptr) {
       std::cout << "alloc failed !" << std::endl;
       break;
