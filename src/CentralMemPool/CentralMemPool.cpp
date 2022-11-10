@@ -79,7 +79,7 @@ void *CentralMemPool::MyMalloc(size_t size) {
     thread_to_over_[pid].emplace_back(tmp);
     thread_mutex_.unlock();
     std::stringstream ss;
-    ss << "thread " << pid << " malloc " << size << "from sys success\n";
+    ss << "thread " << pid << " malloc " << size << "from sys success, ptr: " << ptr << "\n";
     std::cout << ss.str();
     return ptr;
   }
@@ -94,7 +94,7 @@ void *CentralMemPool::MyMalloc(size_t size) {
       ptr_mutex_.unlock();
       thread_mutex_.unlock_shared();
       std::stringstream ss;
-      ss << "thread " << pid << " malloc " << size << " from mem pool success\n";
+      ss << "thread " << pid << " malloc " << size << " from mem pool success, ptr: " << ptr << "\n";
       std::cout << ss.str();
       return ptr;
     }
@@ -119,7 +119,7 @@ void *CentralMemPool::MyMalloc(size_t size) {
   thread_mutex_.unlock();
 
   std::stringstream ss;
-  ss << "thread " << pid << " malloc " << size << " from mem pool success, after add mem pool\n";
+  ss << "thread " << pid << " malloc " << size << " from mem pool success, after add mem pool. ptr: " << ptr << "\n";
   std::cout << ss.str();
   return ptr;
 }
@@ -141,7 +141,7 @@ void CentralMemPool::MyFree(void *p) {
     mem_pool->FreeMemory(p);
     thread_mutex_.unlock_shared();
     std::stringstream ss;
-    ss << "thread " << pid << " free to mem pool success\n";
+    ss << "thread " << pid << " free to mem pool success, ptr: " << p << "\n";
     std::cout << ss.str();
     // 如果释放后，该 ThreadMemPool 变空，则回收该 ThreadMemPool
     if (mem_pool->UsedSize() == 0) {
@@ -174,7 +174,7 @@ void CentralMemPool::MyFree(void *p) {
         FreeToSys(p, over.size);
         thread_mutex_.unlock_shared();
         std::stringstream ss;
-        ss << "thread " << pid << " free to sys success\n";
+        ss << "thread " << pid << " free to sys success, ptr: " << p << "\n";
         std::cout << ss.str();
         return;
       }
