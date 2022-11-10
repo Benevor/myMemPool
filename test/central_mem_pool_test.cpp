@@ -95,7 +95,7 @@ void duplicate_free_test() {
   delete central_pool;
 }
 
-int main(int argc, char *argv[]) {
-  duplicate_free_test();
-  return 0;
-}
+//int main(int argc, char *argv[]) {
+//  duplicate_free_test();
+//  return 0;
+//}

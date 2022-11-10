@@ -10,7 +10,7 @@ void int_alloc_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (pBuf == MAP_FAILED) {
-    cout << " test_Func1: mmap failed" << endl;
+    cout << " int_alloc_test: mmap failed" << endl;
     return;
   }
 
@@ -39,7 +39,7 @@ void print_info_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (pBuf == MAP_FAILED) {
-    cout << " test_Func1: mmap failed" << endl;
+    cout << " print_info_test: mmap failed" << endl;
     return;
   }
 
@@ -53,7 +53,7 @@ void seq_alloc_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (pBuf == MAP_FAILED) {
-    cout << " test_Func1: mmap failed" << endl;
+    cout << " seq_alloc_test: mmap failed" << endl;
     return;
   }
 
@@ -80,7 +80,7 @@ void seq_alloc_align_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (pBuf == MAP_FAILED) {
-    cout << " test_Func1: mmap failed" << endl;
+    cout << " seq_alloc_align_test: mmap failed" << endl;
     return;
   }
 
@@ -107,7 +107,7 @@ void not_merge_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (pBuf == MAP_FAILED) {
-    cout << " test_Func1: mmap failed" << endl;
+    cout << " not_merge_test: mmap failed" << endl;
     return;
   }
 
@@ -131,7 +131,7 @@ void merge_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (pBuf == MAP_FAILED) {
-    cout << " test_Func1: mmap failed" << endl;
+    cout << " merge_test: mmap failed" << endl;
     return;
   }
 
@@ -155,11 +155,11 @@ void merge_test() {
   munmap(pBuf, sBufSize);
 }
 
-void max_test() {
+void max_size_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (pBuf == MAP_FAILED) {
-    cout << " test_Func1: mmap failed" << endl;
+    cout << " max_size_test: mmap failed" << endl;
     return;
   }
 
@@ -178,7 +178,7 @@ void overflow_test() {
   size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
   void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (pBuf == MAP_FAILED) {
-    cout << " test_Func1: mmap failed" << endl;
+    cout << " overflow_test: mmap failed" << endl;
     return;
   }
 
@@ -197,3 +197,37 @@ void overflow_test() {
   munmap(pBuf, sBufSize);
 }
 
+void max_num_test() {
+  size_t sBufSize = MEMORY_POOL_BYTE_SIZE;
+  void *pBuf = mmap(NULL, MEMORY_POOL_BYTE_SIZE, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  if (pBuf == MAP_FAILED) {
+    cout << " max_num_test: mmap failed" << endl;
+    return;
+  }
+
+  ThreadMemPool *mem_pool = nullptr;
+  CreateMemoryPool(pBuf, sBufSize, mem_pool);
+  cout << "============ max_num_test =========" << endl;
+  std::vector<void *> ptrs;
+  std::cout << "max valid num: " << mem_pool->MaxAllocSize() << std::endl;
+  for (int i = 0; i <= mem_pool->MaxAllocSize(); ++i) {
+    void *ptr = mem_pool->AllocMemory(MINUNITSIZE - 1);
+    if (ptr == nullptr) {
+      std::cout << "alloc failed !" << std::endl;
+      break;
+    }
+    ptrs.emplace_back(ptr);
+  }
+  std::cout << "success num: " << ptrs.size() << std::endl;
+  mem_pool->PrintChunkInfo();
+  for (auto &p: ptrs) {
+    mem_pool->FreeMemory(p);
+  }
+  mem_pool->PrintChunkInfo();
+  munmap(pBuf, sBufSize);
+}
+
+int main(int argc, char *argv[]) {
+  max_num_test();
+  return 0;
+}
