@@ -237,7 +237,7 @@ void max_num_test() {
   munmap(pBuf, sBufSize);
 }
 
-int main(int argc, char *argv[]) {
-  max_num_test();
-  return 0;
-}
+//int main(int argc, char *argv[]) {
+//  max_num_test();
+//  return 0;
+//}

@@ -59,6 +59,16 @@ void thread_dup_free(CentralMemPool *central_pool) {
   central_pool->DeleteThread();
 }
 
+void thread_over(CentralMemPool *central_pool) {
+  central_pool->AddThread();
+  if (central_pool->MaxAllocSizeInMemPool() == -1) {
+    std::cout << "thread gc fail !" << std::endl;
+  }
+  auto ptr1 = central_pool->MyMalloc(central_pool->MaxAllocSizeInMemPool() * BLOCK_SIZE+BLOCK_SIZE);
+  central_pool->MyFree(ptr1);
+  central_pool->DeleteThread();
+}
+
 // 测试：单线程简单gc测试
 void simple_gc_test() {
   auto central_pool = new CentralMemPool();
@@ -107,7 +117,17 @@ void duplicate_free_test() {
   delete central_pool;
 }
 
-//int main(int argc, char *argv[]) {
-//  duplicate_free_test();
-//  return 0;
-//}
+// 超大内存块并发测试
+void cc_over_test() {
+  auto central_pool = new CentralMemPool();
+  std::thread t1(thread_over, central_pool);
+  std::thread t2(thread_over, central_pool);
+  t1.join();
+  t2.join();
+  delete central_pool;
+}
+
+int main(int argc, char *argv[]) {
+  cc_over_test();
+  return 0;
+}
